@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#6c5ce7">
+<title>Matematikos misija</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: linear-gradient(160deg, #6c5ce7, #00b894);
+  min-height: 100vh;
+  color: #222;
+}
+
+.app {
+  max-width: 520px;
+  margin: auto;
+  min-height: 100vh;
+  padding: 22px 18px 40px;
+}
+
+h1 {
+  color: white;
+  text-align: center;
+  margin: 10px 0 4px;
+  font-size: 30px;
+}
+
+.subtitle {
+  color: rgba(255,255,255,.9);
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.card {
+  background: white;
+  border-radius: 24px;
+  padding: 20px;
+  box-shadow: 0 12px 30px rgba(0,0,0,.16);
+  margin-bottom: 15px;
+}
+
+.stats {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  text-align: center;
+}
+
+.stat {
+  flex: 1;
+  background: #f5f3ff;
+  border-radius: 16px;
+  padding: 10px 5px;
+}
+
+.stat strong {
+  display: block;
+  font-size: 21px;
+}
+
+.mode-title {
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.modes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.mode {
+  border: 2px solid #eee;
+  background: white;
+  padding: 12px 5px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.mode.active {
+  background: #6c5ce7;
+  color: white;
+  border-color: #6c5ce7;
+}
+
+.tables {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 7px;
+}
+
+.tableBtn {
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 2px;
+  background: #eee;
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.tableBtn.active {
+  background: #00b894;
+  color: white;
+}
+
+.question {
+  text-align: center;
+  font-size: 48px;
+  font-weight: 900;
+  margin: 15px 0 20px;
+}
+
+.answers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.answer {
+  min-height: 72px;
+  border: 0;
+  border-radius: 18px;
+  background: #f1f2f6;
+  font-size: 27px;
+  font-weight: 900;
+}
+
+.answer:active {
+  transform: scale(.97);
+}
+
+.correct {
+  background: #55efc4 !important;
+}
+
+.wrong {
+  background: #ff7675 !important;
+  color: white;
+}
+
+.message {
+  min-height: 30px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 800;
+  margin-top: 15px;
+}
+
+.reward {
+  text-align: center;
+  font-size: 17px;
+}
+
+.small {
+  font-size: 13px;
+  color: #666;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.reset {
+  display: block;
+  margin: 15px auto 0;
+  border: 0;
+  background: transparent;
+  color: #777;
+  text-decoration: underline;
+  font-size: 13px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<h1>🚀 Matematikos misija</h1>
+<div class="subtitle">Rink taškus ir tapk matematikos meistru!</div>
+
+<div class="card stats">
+  <div class="stat">
+    ⭐
+    <strong id="points">0</strong>
+    taškai
+  </div>
+
+  <div class="stat">
+    🔥
+    <strong id="streak">0</strong>
+    serija
+  </div>
+
+  <div class="stat">
+    🏆
+    <strong id="level">1</strong>
+    lygis
+  </div>
+</div>
+
+<div class="card">
+
+<div class="mode-title">Ką treniruojam?</div>
+
+<div class="modes">
+  <button class="mode active" data-mode="mix">🔀 Mišriai</button>
+  <button class="mode" data-mode="mul">✖️ Daugyba</button>
+  <button class="mode" data-mode="div">➗ Dalyba</button>
+</div>
+
+<br>
+
+<div class="mode-title">Pasirink lenteles:</div>
+
+<div class="tables" id="tables"></div>
+
+<div class="small">Gali pasirinkti kelias lenteles vienu metu.</div>
+
+</div>
+
+<div class="card">
+
+<div class="question" id="question">2 × 2 = ?</div>
+
+<div class="answers" id="answers"></div>
+
+<div class="message" id="message"></div>
+
+</div>
+
+<div class="card reward">
+  <div id="reward">🎯 Surink 50 taškų ir gauk pirmą medalį!</div>
+  <button class="reset" onclick="resetScore()">Pradėti taškus iš naujo</button>
+</div>
+
+</div>
+
+<script>
+
+let points = Number(localStorage.getItem("mathPoints")) || 0;
+let streak = Number(localStorage.getItem("mathStreak")) || 0;
+
+let mode = "mix";
+let selectedTables = [2,3,4,5,6,7,8,9,10];
+
+let correctAnswer = 4;
+let currentType = "mul";
+let locked = false;
+
+let mistakes = JSON.parse(localStorage.getItem("mathMistakes") || "[]");
+
+const pointsEl = document.getElementById("points");
+const streakEl = document.getElementById("streak");
+const levelEl = document.getElementById("level");
+const questionEl = document.getElementById("question");
+const answersEl = document.getElementById("answers");
+const messageEl = document.getElementById("message");
+const rewardEl = document.getElementById("reward");
+
+function save() {
+  localStorage.setItem("mathPoints", points);
+  localStorage.setItem("mathStreak", streak);
+  localStorage.setItem("mathMistakes", JSON.stringify(mistakes));
+}
+
+function updateStats() {
+
+  pointsEl.textContent = points;
+  streakEl.textContent = streak;
+
+  let level = Math.floor(points / 50) + 1;
+  levelEl.textContent = level;
+
+  if(points >= 500) {
+    rewardEl.innerHTML = "👑 <b>MATEMATIKOS ČEMPIONAS!</b>";
+  }
+  else if(points >= 300) {
+    rewardEl.innerHTML = "🏆 Atrakintas AUKSINIS TROFĖJUS!";
+  }
+  else if(points >= 200) {
+    rewardEl.innerHTML = "🥇 Atrakintas AUKSO MEDALIS!";
+  }
+  else if(points >= 100) {
+    rewardEl.innerHTML = "🥈 Atrakintas SIDABRO MEDALIS!";
+  }
+  else if(points >= 50) {
+    rewardEl.innerHTML = "🥉 Atrakintas BRONZOS MEDALIS!";
+  }
+  else {
+    rewardEl.innerHTML =
+      "🎯 Iki pirmo medalio liko <b>" + (50-points) + "</b> taškų!";
+  }
+}
+
+function createTables() {
+
+  const container = document.getElementById("tables");
+
+  for(let i=2; i<=10; i++) {
+
+    const b = document.createElement("button");
+
+    b.className = "tableBtn active";
+    b.textContent = "×" + i;
+
+    b.onclick = () => {
+
+      if(selectedTables.includes(i)) {
+
+        if(selectedTables.length === 1) return;
+
+        selectedTables =
+          selectedTables.filter(x => x !== i);
+
+        b.classList.remove("active");
+
+      } else {
+
+        selectedTables.push(i);
+        b.classList.add("active");
+
+      }
+
+      newQuestion();
+    };
+
+    container.appendChild(b);
+  }
+}
+
+document.querySelectorAll(".mode").forEach(btn => {
+
+  btn.onclick = () => {
+
+    document.querySelectorAll(".mode")
+      .forEach(b => b.classList.remove("active"));
+
+    btn.classList.add("active");
+
+    mode = btn.dataset.mode;
+
+    newQuestion();
+  };
+
+});
+
+function randomFrom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function newQuestion() {
+
+  locked = false;
+  messageEl.textContent = "";
+
+  let a, b;
+
+  /*
+     Maždaug kas ketvirtą klausimą
+     pakartojame ankstesnę klaidą.
+  */
+
+  if(mistakes.length > 0 && Math.random() < 0.25) {
+
+    const old = randomFrom(mistakes);
+
+    a = old.a;
+    b = old.b;
+    currentType = old.type;
+
+  } else {
+
+    b = randomFrom(selectedTables);
+    a = Math.floor(Math.random() * 9) + 2;
+
+    if(mode === "mix") {
+      currentType = Math.random() < 0.5 ? "mul" : "div";
+    } else {
+      currentType = mode;
+    }
+  }
+
+  if(currentType === "mul") {
+
+    correctAnswer = a * b;
+    questionEl.textContent = a + " × " + b + " = ?";
+
+  } else {
+
+    correctAnswer = a;
+    questionEl.textContent = (a*b) + " ÷ " + b + " = ?";
+  }
+
+  makeAnswers();
+}
+
+function makeAnswers() {
+
+  answersEl.innerHTML = "";
+
+  let options = [correctAnswer];
+
+  while(options.length < 4) {
+
+    let offset = Math.floor(Math.random()*9) - 4;
+
+    if(offset === 0) continue;
+
+    let fake = correctAnswer + offset;
+
+    if(fake > 0 && !options.includes(fake)) {
+      options.push(fake);
+    }
+  }
+
+  options.sort(() => Math.random() - .5);
+
+  options.forEach(num => {
+
+    const btn = document.createElement("button");
+
+    btn.className = "answer";
+    btn.textContent = num;
+
+    btn.onclick = () => checkAnswer(num, btn);
+
+    answersEl.appendChild(btn);
+  });
+}
+
+function checkAnswer(answer, button) {
+
+  if(locked) return;
+
+  locked = true;
+
+  if(answer === correctAnswer) {
+
+    button.classList.add("correct");
+
+    let earned =
+      currentType === "div" ? 2 : 1;
+
+    streak++;
+
+    /*
+       Bonusas kas 5 teisingus iš eilės.
+    */
+
+    if(streak % 5 === 0) {
+
+      earned += 3;
+
+      messageEl.textContent =
+        "🔥 " + streak +
+        " iš eilės! +" + earned + " taškai!";
+
+    } else {
+
+      messageEl.textContent =
+        "🎉 Teisingai! +" + earned;
+    }
+
+    points += earned;
+
+  } else {
+
+    button.classList.add("wrong");
+
+    streak = 0;
+
+    messageEl.textContent =
+      "💡 Teisingas atsakymas: " + correctAnswer;
+
+    /*
+       Išsaugome klaidingą užduotį,
+       kad ji vėliau pasikartotų.
+    */
+
+    let text = questionEl.textContent;
+
+    let parts;
+
+    if(currentType === "mul") {
+
+      parts = text.split(" × ");
+
+      mistakes.push({
+        a: Number(parts[0]),
+        b: Number(parts[1].split(" ")[0]),
+        type: "mul"
+      });
+
+    } else {
+
+      /*
+         Dalybos užduočiai atstatome
+         dauginamuosius.
+      */
+
+      let dividend =
+        Number(text.split(" ÷ ")[0]);
+
+      let divisor =
+        Number(text.split(" ÷ ")[1].split(" ")[0]);
+
+      mistakes.push({
+        a: dividend / divisor,
+        b: divisor,
+        type: "div"
+      });
+    }
+
+    /*
+       Neleidžiame klaidų sąrašui
+       augti be galo.
+    */
+
+    if(mistakes.length > 20) {
+      mistakes.shift();
+    }
+  }
+
+  save();
+  updateStats();
+
+  setTimeout(newQuestion, 1300);
+}
+
+function resetScore() {
+
+  if(confirm("Tikrai pradėti taškus iš naujo?")) {
+
+    points = 0;
+    streak = 0;
+    mistakes = [];
+
+    save();
+    updateStats();
+    newQuestion();
+  }
+}
+
+createTables();
+updateStats();
+newQuestion();
+
+</script>
+
+</body>
+</html>
